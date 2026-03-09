@@ -1,13 +1,13 @@
 # PowerSync + Convex Demo App
 
-A React todo-list demo that syncs data between Convex and local SQLite via PowerSync. **No separate Node.js backend required** — auth and mutations are handled directly by Convex HTTP actions.
+A React todo-list demo that syncs data between Convex and local SQLite via PowerSync. **No separate Node.js backend required** — auth is handled by Convex Auth and mutations are called directly via the Convex client.
 
 ## Architecture
 
 ```
 Browser (React + PowerSync SDK)
-  ├── Auth tokens ──► Convex HTTP action  GET  /auth/token
-  ├── Mutations   ──► Convex HTTP action  POST /powersync/batch ──► applyBatch mutation
+  ├── Auth tokens ──► Convex Auth (JWT issued by Convex)
+  ├── Mutations   ──► Convex client mutations (lists:create, todos:update, etc.)
   └── Sync        ◄── PowerSync Service  ◄── Convex streaming export
 ```
 
@@ -15,7 +15,7 @@ Browser (React + PowerSync SDK)
 
 - Self-hosted Convex backend running (see `convex-self-host/`)
 - PowerSync service running with Convex module configured
-- JWT keys generated and set as Convex env vars (see `convex-self-host/README.md`)
+- PowerSync JWKS configured to use Convex Auth's `/.well-known/jwks.json` endpoint
 
 ## Setup
 
@@ -34,13 +34,13 @@ pnpm dev
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_CONVEX_SITE_URL` | `http://127.0.0.1:3211` | Convex HTTP actions URL |
+| `VITE_CONVEX_URL` | `http://127.0.0.1:3210` | Convex backend URL |
 | `VITE_POWERSYNC_URL` | `http://localhost:8080` | PowerSync service URL |
 
 ## Authentication
 
-Anonymous authentication: a random user ID is generated and stored in localStorage. The Convex `/auth/token` HTTP action returns a signed JWT for that user. PowerSync verifies the token via the `/auth/keys` JWKS endpoint.
+Convex Auth handles user authentication (email/password). The Convex Auth session JWT is reused directly for PowerSync authentication. PowerSync verifies the token via Convex Auth's built-in JWKS endpoint at `/.well-known/jwks.json`.
 
 ## Mutations
 
-Client writes go into the PowerSync upload queue, which calls `uploadData()` in the connector. This POSTs the CRUD batch directly to the Convex `/powersync/batch` HTTP action, which internally runs the `applyBatch` mutation to write to Convex tables.
+Client writes go into the PowerSync upload queue, which calls `uploadData()` in the connector. This calls Convex mutations directly via the `ConvexReactClient` (e.g. `lists:create`, `todos:update`, `todos:remove`).
