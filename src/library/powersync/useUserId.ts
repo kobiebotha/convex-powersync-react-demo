@@ -13,7 +13,8 @@ export function useUserId(): string | null {
     if (!token) return null;
     try {
       const decoded = jwtDecode<ConvexJwtPayload>(token);
-      return decoded.sub;
+      const userId = decoded.sub.split('|')[0]; // just the user _id
+      return userId;
     } catch {
       return null;
     }
