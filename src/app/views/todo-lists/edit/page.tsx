@@ -105,8 +105,8 @@ const TodoEditSection = () => {
                 key={r.id}
                 description={r.description}
                 onDelete={() => deleteTodo(r.id)}
-                isComplete={r.status === 'completed'}
-                toggleCompletion={() => toggleCompletion(r, r.status !== 'completed')}
+                isComplete={r.completed === 1}
+                toggleCompletion={() => toggleCompletion(r, r.completed !== 1)}
               />
             ))}
           </List>
